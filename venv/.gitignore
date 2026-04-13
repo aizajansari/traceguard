@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Virtual Environment
+venv/
+venv_*/
+.virtualenv/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Project specific
+reports/
+logs/
+temp/
+*.log
+*.tmp
+*.temp
+
+# OS files
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Exiftool (large file)
+exiftool.exe
+exiftool
+*.exe
+
+# Test files
+test_*.jpg
+test_*.png
+*_cleaned.jpg
+temp_*.jpg
+
+# TailsOS specific
+.Persistent

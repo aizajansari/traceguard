@@ -1,0 +1,5 @@
+# Core dependencies
+Pillow>=9.0.0
+
+# Optional but recommended
+# python-magic>=0.4.27  # Uncomment for Linux/Mac
