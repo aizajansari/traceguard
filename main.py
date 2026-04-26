@@ -1,61 +1,53 @@
 ﻿#!/usr/bin/env python3
 """
 TraceGuard - Forensic Metadata Tool
-Cross-platform entry point for Windows, Linux, Mac, TailsOS
+Auto-detects GUI availability, falls back to CLI on TailsOS
 """
 
 import sys
 import os
-import platform
 
-# Add src to path
-sys.path.insert(0, os.path.dirname(__file__))
+def check_gui():
+    """Check if GUI (tkinter) is available"""
+    try:
+        import tkinter
+        return True
+    except ImportError:
+        return False
 
-def check_environment():
-    """Check if environment is ready"""
-    system = platform.system()
-    print(f"🛡️ TraceGuard Forensic Tool")
-    print(f"📡 System: {system} {platform.release()}")
-    print(f"🐍 Python: {platform.python_version()}")
-    print("-" * 40)
-    
-    # Check for exiftool
-    exiftool_paths = [
-        r"C:\Users\techone\Downloads\exiftool-13.55_64\exiftool-13.55_64\exiftool.exe",  # Windows
-        "/usr/bin/exiftool",  # Linux
-        "/usr/local/bin/exiftool",  # Mac
-        "/home/amnesia/Persistent/exiftool",  # TailsOS
-        "exiftool"  # Anywhere in PATH
-    ]
-    
-    exiftool_found = False
-    for path in exiftool_paths:
-        if os.path.exists(path):
-            print(f"✅ exiftool found: {path}")
-            exiftool_found = True
-            break
-    
-    if not exiftool_found:
-        print("⚠️ exiftool not found - Some features limited")
-        print("   Install from: https://exiftool.org/")
-    
-    return True
+def run_cli():
+    """Run CLI version when GUI not available"""
+    cli_path = os.path.join(os.path.dirname(__file__), 'cli.py')
+    if os.path.exists(cli_path):
+        with open(cli_path, 'r') as f:
+            code = f.read()
+        exec(code)
+    else:
+        print("CLI mode not found. Please ensure cli.py exists.")
+        print("Run: python3 cli.py")
 
 def main():
-    """Main entry point"""
-    try:
-        from src.gui.main_window import MainWindow
-        app = MainWindow()
-        app.run()
-    except ImportError as e:
-        print(f"❌ Import error: {e}")
-        print("\nPlease ensure you have installed dependencies:")
-        print("  pip install Pillow")
-        sys.exit(1)
-    except Exception as e:
-        print(f"❌ Error: {e}")
-        sys.exit(1)
+    # Add src to path
+    sys.path.insert(0, os.path.dirname(__file__))
+    
+    print("=" * 50)
+    print("  TRACEGUARD - FORENSIC METADATA TOOL")
+    print("=" * 50)
+    
+    if check_gui():
+        print("GUI mode available. Loading...")
+        try:
+            from src.gui.main_window import MainWindow
+            app = MainWindow()
+            app.run()
+        except Exception as e:
+            print(f"GUI Error: {e}")
+            print("Falling back to CLI mode...")
+            run_cli()
+    else:
+        print("GUI not available (tkinter missing)")
+        print("Using CLI mode...\n")
+        run_cli()
 
 if __name__ == "__main__":
-    check_environment()
     main()
