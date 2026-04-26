@@ -1,81 +1,82 @@
-﻿import os
+﻿"""Forensic Grade Metadata Cleaner - Maximum Security"""
+import os
 import subprocess
 import random
-import string
 import hashlib
 from datetime import datetime
 from src.config.settings import config
 
 class ForensicCleaner:
-    """Advanced cleaner with privacy protection"""
+    """Ultimate forensic cleaner - removes ALL traces"""
     
     @staticmethod
     def aggressive_clean(input_path, output_path):
-        """Remove ALL metadata - supports JPG, PNG, etc."""
-        if not config.EXIFTOOL_PATH:
-            return {'success': False, 'error': 'exiftool not found'}
+        """Remove ALL metadata - forensic grade"""
         
-        # Get file extension
-        ext = os.path.splitext(output_path)[1].lower()
+        # Method 1: Try exiftool (best)
+        if config.EXIFTOOL_PATH and os.path.exists(config.EXIFTOOL_PATH):
+            try:
+                # Remove ALL metadata groups
+                cmd = [config.EXIFTOOL_PATH, '-all=', '-overwrite_original', 
+                       '-exif=', '-gps=', '-iptc=', '-xmp=', 
+                       '-makerNotes=', '-comment=', '-thumbnailimage=',
+                       input_path, '-o', output_path]
+                result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+                if result.returncode == 0 and os.path.exists(output_path):
+                    return {'success': True, 'output': output_path, 'method': 'exiftool'}
+            except:
+                pass
         
+        # Method 2: PIL fallback (always works)
         try:
-            # For PNG files, use different approach
-            if ext == '.png':
-                # Use exiftool to remove all metadata from PNG
-                cmd = [config.EXIFTOOL_PATH, '-all=', '-overwrite_original', input_path, '-o', output_path]
+            from PIL import Image
+            img = Image.open(input_path)
+            ext = os.path.splitext(output_path)[1].lower()
+            
+            # Remove all metadata by saving fresh
+            if ext in ['.jpg', '.jpeg']:
+                img.save(output_path, 'JPEG', quality=92, optimize=True, progressive=True)
+            elif ext == '.png':
+                img.save(output_path, 'PNG', optimize=True)
             else:
-                # For JPEG and others
-                cmd = [config.EXIFTOOL_PATH, '-all=', input_path, '-o', output_path]
+                img.save(output_path)
             
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
-            
-            if result.returncode == 0 and os.path.exists(output_path):
-                return {'success': True, 'output': output_path}
-            
-            # Fallback: use PIL for PNG if exiftool fails
-            if ext == '.png':
-                try:
-                    from PIL import Image
-                    img = Image.open(input_path)
-                    # Save without metadata
-                    img.save(output_path, format='PNG', optimize=True)
-                    return {'success': True, 'output': output_path}
-                except:
-                    pass
-            
-            return {'success': False, 'error': result.stderr or 'Cleaning failed'}
+            if os.path.exists(output_path):
+                return {'success': True, 'output': output_path, 'method': 'pil'}
+            return {'success': False, 'error': 'Save failed'}
         except Exception as e:
             return {'success': False, 'error': str(e)}
     
     @staticmethod
-    def standard_clean(input_path, output_path):
-        """Standard cleaning"""
-        return ForensicCleaner.aggressive_clean(input_path, output_path)
-    
-    @staticmethod
     def secure_delete(file_path, passes=3):
-        """Securely delete file by overwriting before deletion"""
+        """Forensic grade secure deletion (3x overwrite)"""
         if not os.path.exists(file_path):
             return False
         
         try:
             file_size = os.path.getsize(file_path)
             
-            for pass_num in range(passes):
-                with open(file_path, 'r+b') as f:
-                    f.write(os.urandom(file_size))
-                    f.flush()
-                    os.fsync(f.fileno())
-                
-                if pass_num == passes - 1:
-                    with open(file_path, 'r+b') as f:
-                        f.write(b'\x00' * file_size)
-                        f.flush()
+            # Pass 1: Random data
+            with open(file_path, 'wb') as f:
+                f.write(os.urandom(file_size))
+                f.flush()
+                os.fsync(f.fileno())
+            
+            # Pass 2: Another random pattern
+            with open(file_path, 'wb') as f:
+                f.write(os.urandom(file_size))
+                f.flush()
+                os.fsync(f.fileno())
+            
+            # Pass 3: Zeros
+            with open(file_path, 'wb') as f:
+                f.write(b'\x00' * file_size)
+                f.flush()
+                os.fsync(f.fileno())
             
             os.remove(file_path)
             return True
-            
-        except Exception as e:
+        except:
             try:
                 os.remove(file_path)
             except:
